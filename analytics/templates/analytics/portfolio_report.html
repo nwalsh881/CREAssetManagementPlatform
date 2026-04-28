@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Portfolio Analytics</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="container mt-5">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Portfolio Performance Report</h1>
+    <a href="{% url 'property_list' %}" class="btn btn-outline-secondary">Back to List</a>
+  </div>
+
+  <!-- Main filter form -->
+  <form method="get" class="row g-3 mb-4 mt-2">
+    <div class="col-md-3">
+      <label class="form-label">Market</label>
+      <select name="market" id="market-select" class="form-select">
+        <option value="">-- All Markets --</option>
+        {% for m in markets %}
+        <option value="{{ m.id }}"
+          {% if selected_market == m.id|stringformat:"s" %}selected{% endif %}>
+          {{ m.city_name }}, {{ m.state }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">Submarket</label>
+      <select name="submarket" id="submarket-select" class="form-select">
+        <option value="">-- All Submarkets --</option>
+        {% for s in submarkets %}
+        <option value="{{ s.id }}"
+          data-market="{{ s.market_id }}"
+          {% if selected_submarket == s.id|stringformat:"s" %}selected{% endif %}>
+          {{ s.name }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">Property Type</label>
+      <select name="property_type" class="form-select">
+        <option value="">-- All Types --</option>
+        {% for pt in property_types %}
+        <option value="{{ pt.id }}"
+          {% if selected_type == pt.id|stringformat:"s" %}selected{% endif %}>
+          {{ pt.name }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-3 d-flex align-items-end">
+      <button type="submit" class="btn btn-primary w-100">Filter Report</button>
+    </div>
+  </form>
+
+  <!-- Summary cards -->
+  {% if report_data %}
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card text-center border-primary">
+        <div class="card-body">
+          <h6 class="card-title text-muted">Properties</h6>
+          <h4>{{ report_data|length }}</h4>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center border-success">
+        <div class="card-body">
+          <h6 class="card-title text-muted">Total NOI</h6>
+          <h4>${{ total_noi|floatformat:0 }}</h4>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center border-warning">
+        <div class="card-body">
+          <h6 class="card-title text-muted">Avg Cap Rate</h6>
+          <h4>{{ avg_cap_rate }}%</h4>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center border-info">
+        <div class="card-body">
+          <h6 class="card-title text-muted">Avg Occupancy</h6>
+          <h4>{{ avg_occupancy }}%</h4>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Main report table -->
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover">
+      <thead class="table-dark text-center">
+        <tr>
+          <th>Property</th>
+          <th>Market</th>
+          <th>Submarket</th>
+          <th>Type</th>
+          <th>Sq Ft</th>
+          <th>Rent/Sq Ft</th>
+          <th>PGI</th>
+          <th>EGI</th>
+          <th>Expenses</th>
+          <th>NOI</th>
+          <th>Cap Rate</th>
+          <th>Occupancy</th>
+        </tr>
+      </thead>
+      <tbody class="text-center">
+        {% for item in report_data %}
+        <tr>
+          <td class="text-start"><strong>{{ item.name }}</strong></td>
+          <td>{{ item.city_name }}, {{ item.state }}</td>
+          <td>{{ item.submarket }}</td>
+          <td>{{ item.property_type }}</td>
+          <td>{{ item.sq_ft|floatformat:0 }}</td>
+          <td>${{ item.market_rent_per_sqft }}</td>
+          <td>${{ item.pgi|floatformat:0 }}</td>
+          <td>${{ item.egi|floatformat:0 }}</td>
+          <td class="text-danger">${{ item.total_expenses|floatformat:0 }}</td>
+          <td class="text-success fw-bold">${{ item.noi|floatformat:0 }}</td>
+          <td class="fw-bold">{{ item.cap_rate }}%</td>
+          <td>
+            <div class="progress" style="height: 20px;">
+              <div class="progress-bar bg-info" role="progressbar"
+                style="width: {{ item.occupancy_rate }}%;"
+                aria-valuenow="{{ item.occupancy_rate }}"
+                aria-valuemin="0" aria-valuemax="100">
+                {{ item.occupancy_rate }}%
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="12" class="text-muted text-center">No properties match the selected filters.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Expiring leases section -->
+  <h3 class="mt-5">Upcoming Lease Expirations</h3>
+
+  <form method="get" class="row g-3 mb-3">
+    <!-- Preserve main filters when filtering leases -->
+    <input type="hidden" name="market" value="{{ selected_market }}">
+    <input type="hidden" name="property_type" value="{{ selected_type }}">
+    <input type="hidden" name="submarket" value="{{ selected_submarket }}">
+    <div class="col-md-3">
+      <select name="expiring_within" class="form-select">
+        <option value="30"  {% if days_filter == "30"  %}selected{% endif %}>Within 30 days</option>
+        <option value="90"  {% if days_filter == "90"  %}selected{% endif %}>Within 90 days</option>
+        <option value="180" {% if days_filter == "180" %}selected{% endif %}>Within 180 days</option>
+        <option value="365" {% if days_filter == "365" %}selected{% endif %}>Within 1 year</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-warning w-100">Filter Leases</button>
+    </div>
+  </form>
+
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover">
+      <thead class="table-warning text-center">
+        <tr>
+          <th>Tenant</th>
+          <th>Property</th>
+          <th>City</th>
+          <th>Sq Ft</th>
+          <th>Annual Rent</th>
+          <th>Expiry Date</th>
+          <th>Days Remaining</th>
+        </tr>
+      </thead>
+      <tbody class="text-center">
+        {% for lease in expiring_leases %}
+        <tr class="{% if lease.days_until_expiry <= 30 %}table-danger{% elif lease.days_until_expiry <= 90 %}table-warning{% endif %}">
+          <td class="text-start"><strong>{{ lease.tenant_name }}</strong></td>
+          <td>{{ lease.property_name }}</td>
+          <td>{{ lease.city_name }}</td>
+          <td>{{ lease.sq_ft_occupied|floatformat:0 }}</td>
+          <td>${{ lease.annual_rent|floatformat:0 }}</td>
+          <td>{{ lease.lease_end_date }}</td>
+          <td>
+            <span class="badge
+              {% if lease.days_until_expiry <= 30 %}bg-danger
+              {% elif lease.days_until_expiry <= 90 %}bg-warning text-dark
+              {% else %}bg-success{% endif %}">
+              {{ lease.days_until_expiry }} days
+            </span>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-muted text-center">No leases expiring within this period.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // Filter submarket dropdown based on selected market (mirrors property_form.html)
+    const marketSelect = document.getElementById('market-select');
+    const submarketSelect = document.getElementById('submarket-select');
+    const allOptions = Array.from(submarketSelect.querySelectorAll('option'));
+
+    function filterSubmarkets() {
+      const selectedMarket = marketSelect.value;
+      allOptions.forEach(opt => {
+        if (!opt.value) return;
+        opt.hidden = selectedMarket && opt.dataset.market !== selectedMarket;
+      });
+      const selected = submarketSelect.querySelector('option:checked');
+      if (selected && selected.hidden) submarketSelect.value = '';
+    }
+
+    marketSelect.addEventListener('change', filterSubmarkets);
+    filterSubmarkets();
+  </script>
+
+</body>
+</html>

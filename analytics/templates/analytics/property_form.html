@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Manage Property</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="container mt-5">
+
+  <div class="card shadow">
+    <div class="card-header bg-primary text-white">
+      <h2 class="mb-0">{{ action }} Property</h2>
+    </div>
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Market</label>
+            <select name="market" id="market-select" class="form-select" required>
+              <option value="">-- Select Market --</option>
+              {% for m in markets %}
+              <option value="{{ m.id }}"
+                {% if prop.market_id == m.id %}selected{% endif %}>
+                {{ m.city_name }}, {{ m.state }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Submarket</label>
+            <!-- Built dynamically from DB (Requirement 2c) -->
+            <select name="submarket" id="submarket-select" class="form-select" required>
+              <option value="">-- Select Submarket --</option>
+              {% for s in submarkets %}
+              <option value="{{ s.id }}"
+                data-market="{{ s.market_id }}"
+                {% if prop.submarket_id == s.id %}selected{% endif %}>
+                {{ s.name }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Property Name</label>
+          <input type="text" name="name" class="form-control" value="{{ prop.name }}" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Address</label>
+          <input type="text" name="address" class="form-control" value="{{ prop.address }}" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Property Type</label>
+          <!-- Built dynamically from DB (Requirement 2c) -->
+          <select name="property_type" class="form-select" required>
+            <option value="">-- Select Type --</option>
+            {% for pt in property_types %}
+            <option value="{{ pt.id }}"
+              {% if prop.property_type_id == pt.id %}selected{% endif %}>
+              {{ pt.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Square Feet</label>
+            <input type="number" name="sq_ft" class="form-control" value="{{ prop.sq_ft }}" required>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Units</label>
+            <input type="number" name="units" class="form-control" value="{{ prop.units|default:1 }}" required>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Year Built</label>
+            <input type="number" name="year_built" class="form-control" value="{{ prop.year_built }}" required>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Acres</label>
+            <input type="number" step="0.01" name="acres" class="form-control" value="{{ prop.acres }}" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Purchase Price ($)</label>
+            <input type="number" step="0.01" name="purchase_price" class="form-control" value="{{ prop.purchase_price }}" required>
+          </div>
+        </div>
+
+        <hr>
+        <h5 class="mb-3">Financial Inputs</h5>
+
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Market Rent ($/sq ft/yr)</label>
+            <input type="number" step="0.01" name="market_rent_per_sqft" class="form-control"
+              value="{{ prop.market_rent_per_sqft }}" required>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Misc Income ($/yr)</label>
+            <input type="number" step="0.01" name="misc_income" class="form-control"
+              value="{{ prop.misc_income|default:0 }}">
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Annual OPEX Reserve ($)</label>
+            <input type="number" step="0.01" name="annual_opex_reserve" class="form-control"
+              value="{{ prop.annual_opex_reserve|default:0 }}">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Annual CAPX Reserve ($)</label>
+            <input type="number" step="0.01" name="annual_capx_reserve" class="form-control"
+              value="{{ prop.annual_capx_reserve|default:0 }}">
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-2">
+          <button type="submit" class="btn btn-success">Save Property</button>
+          <a href="{% url 'property_list' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Filter submarket dropdown to only show submarkets for the selected market
+    const marketSelect = document.getElementById('market-select');
+    const submarketSelect = document.getElementById('submarket-select');
+    const allOptions = Array.from(submarketSelect.querySelectorAll('option'));
+
+    function filterSubmarkets() {
+      const selectedMarket = marketSelect.value;
+      allOptions.forEach(opt => {
+        if (!opt.value) return; // keep the placeholder
+        opt.hidden = selectedMarket && opt.dataset.market !== selectedMarket;
+      });
+      // If current submarket selection is now hidden, reset it
+      const selected = submarketSelect.querySelector('option:checked');
+      if (selected && selected.hidden) submarketSelect.value = '';
+    }
+
+    marketSelect.addEventListener('change', filterSubmarkets);
+    filterSubmarkets(); // run on page load for edit form
+  </script>
+
+</body>
+</html>
