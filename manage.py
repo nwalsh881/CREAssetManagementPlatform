@@ -42,13 +42,6 @@ import sys
 # - Schema decisions were evaluated against project requirements before
 #   implementing — for example, confirming that FK-based dropdowns satisfied
 #   requirement 2c before adopting that approach.
-# - The cascading submarket JS was tested in the browser across multiple
-#   market selections to confirm correct filtering behavior.
-# - Migration errors and integrity errors encountered during development
-#   confirmed understanding of how Django handles FK constraints and
-#   schema changes on existing data.
-# - All code was reviewed line by line and can be explained independently
-#   of AI assistance.
 # =============================================================================
 
 def main():
