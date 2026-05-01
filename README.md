@@ -12,6 +12,7 @@ This application allows a real estate investor to track properties across multip
 - Add, edit, and delete commercial properties
 - Track key property attributes: market, submarket, property type, square footage, purchase price, and financial inputs
 - All dropdown menus (market, submarket, property type) are populated dynamically from the database
+
 **Portfolio Analytics Report**
 - Filter properties by market, submarket, and property type
 - View calculated financial metrics for each property:
