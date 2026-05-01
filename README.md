@@ -4,15 +4,15 @@ A database-backed web application for managing and analyzing a commercial real e
  
 ## Overview
  
-This application allows a real estate investor to track properties across multiple markets, manage tenant leases, and generate financial performance reports including NOI, cap rate, and occupancy metrics.
+This application allows a real estate investor to track properties across multiple markets, manage tenant leases, and generate financial performance reports including NOI, cap rate, and occupancy metrics. A very simple application of computer science concepts and commercial real estate.
  
 ## Features
  
-**Property Management (Requirement 1)**
+**Asset Management **
 - Add, edit, and delete commercial properties
 - Track key property attributes: market, submarket, property type, square footage, purchase price, and financial inputs
 - All dropdown menus (market, submarket, property type) are populated dynamically from the database
-**Portfolio Analytics Report (Requirement 2)**
+**Portfolio Analytics Report **
 - Filter properties by market, submarket, and property type
 - View calculated financial metrics for each property:
   - Potential Gross Income (PGI)
@@ -65,7 +65,7 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
  
-Then visit `http://127.0.0.1:8000` in your browser.
+Then visit the given link in your terminal.
  
 ## Project Structure
  
@@ -85,18 +85,7 @@ analytics/
 └── views.py
 ```
  
-## CS348 Course Concepts Implemented
- 
-**SQL Injection Protection**
-All queries use parameterized statements via Django's `cursor.execute(sql, params)`. User input is never interpolated directly into SQL strings.
- 
-**Indexes**
-- `idx_property_market_type` — composite index on `market_id` and `property_type_id`, supports report filtering
-- `idx_lease_end_date` — supports the expiring leases date range query in the report
-- `idx_lease_property_enddate` — composite index on `property_id` and `lease_end_date`, supports both the main report JOIN and the expiring leases query
-**Transactions**
-Write operations (add, edit, delete) are wrapped in `transaction.atomic()`. The delete operation in particular requires deleting associated leases before the property, making atomicity essential. SQLite enforces serializable isolation by default via file-level locking.
- 
+
 ## AI Usage
  
 **Tool Used:** Claude (Anthropic)
