@@ -45,6 +45,13 @@ class Property(models.Model):
     annual_opex_reserve = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     annual_capx_reserve = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
+    # index on market and property type for faster queries
+    class Meta:
+        indexes = [
+            models.Index(fields=['market', 'property_type'], name='idx_property_market_type'),
+        ]
+
+
     def __str__(self):
         return self.name
 
@@ -55,6 +62,14 @@ class Lease(models.Model):
     sq_ft_occupied = models.IntegerField()
     lease_start_date = models.DateField(default='2026-01-01')
     lease_end_date = models.DateField(default='2000-01-01')
+
+    # index on lease end date for faster queries on expiring leases
+    class Meta:
+        indexes = [
+            models.Index(fields=['lease_end_date'], name='idx_lease_end_date'),
+            models.Index(fields=['property', 'lease_end_date'], name='idx_lease_property_enddate'),
+        ]
+
 
     def __str__(self):
         return f"{self.tenant_name} - {self.property.name}"

@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.db import connection
+from django.db import connection, transaction
 
 
 # ==========================================
@@ -35,30 +36,31 @@ def property_list(request):
 
 def property_add(request):
     if request.method == 'POST':
-        with connection.cursor() as cursor:
-            cursor.execute("""
-                INSERT INTO analytics_property
-                    (market_id, submarket_id, property_type_id, name, address,
-                     sq_ft, units, year_built, acres, purchase_price,
-                     market_rent_per_sqft, misc_income,
-                     annual_opex_reserve, annual_capx_reserve)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, [
-                request.POST['market'],
-                request.POST['submarket'],
-                request.POST['property_type'],
-                request.POST['name'],
-                request.POST['address'],
-                request.POST['sq_ft'],
-                request.POST['units'],
-                request.POST['year_built'],
-                request.POST['acres'],
-                request.POST['purchase_price'],
-                request.POST['market_rent_per_sqft'],
-                request.POST.get('misc_income', 0),
-                request.POST.get('annual_opex_reserve', 0),
-                request.POST.get('annual_capx_reserve', 0),
-            ])
+        with transaction.atomic():
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    INSERT INTO analytics_property
+                        (market_id, submarket_id, property_type_id, name, address,
+                        sq_ft, units, year_built, acres, purchase_price,
+                        market_rent_per_sqft, misc_income,
+                        annual_opex_reserve, annual_capx_reserve)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, [
+                    request.POST['market'],
+                    request.POST['submarket'],
+                    request.POST['property_type'],
+                    request.POST['name'],
+                    request.POST['address'],
+                    request.POST['sq_ft'],
+                    request.POST['units'],
+                    request.POST['year_built'],
+                    request.POST['acres'],
+                    request.POST['purchase_price'],
+                    request.POST['market_rent_per_sqft'],
+                    request.POST.get('misc_income', 0),
+                    request.POST.get('annual_opex_reserve', 0),
+                    request.POST.get('annual_capx_reserve', 0),
+                ])
         return redirect('property_list')
 
     with connection.cursor() as cursor:
@@ -90,32 +92,33 @@ def property_edit(request, pk):
         submarkets = dictfetchall(cursor)
 
     if request.method == 'POST':
-        with connection.cursor() as cursor:
-            cursor.execute("""
-                UPDATE analytics_property
-                SET market_id=%s, submarket_id=%s, property_type_id=%s,
-                    name=%s, address=%s, sq_ft=%s, units=%s,
-                    year_built=%s, acres=%s, purchase_price=%s,
-                    market_rent_per_sqft=%s, misc_income=%s,
-                    annual_opex_reserve=%s, annual_capx_reserve=%s
-                WHERE id=%s
-            """, [
-                request.POST['market'],
-                request.POST['submarket'],
-                request.POST['property_type'],
-                request.POST['name'],
-                request.POST['address'],
-                request.POST['sq_ft'],
-                request.POST['units'],
-                request.POST['year_built'],
-                request.POST['acres'],
-                request.POST['purchase_price'],
-                request.POST['market_rent_per_sqft'],
-                request.POST.get('misc_income', 0),
-                request.POST.get('annual_opex_reserve', 0),
-                request.POST.get('annual_capx_reserve', 0),
-                pk,
-            ])
+        with transaction.atomic():
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    UPDATE analytics_property
+                    SET market_id=%s, submarket_id=%s, property_type_id=%s,
+                        name=%s, address=%s, sq_ft=%s, units=%s,
+                        year_built=%s, acres=%s, purchase_price=%s,
+                        market_rent_per_sqft=%s, misc_income=%s,
+                        annual_opex_reserve=%s, annual_capx_reserve=%s
+                    WHERE id=%s
+                """, [
+                    request.POST['market'],
+                    request.POST['submarket'],
+                    request.POST['property_type'],
+                    request.POST['name'],
+                    request.POST['address'],
+                    request.POST['sq_ft'],
+                    request.POST['units'],
+                    request.POST['year_built'],
+                    request.POST['acres'],
+                    request.POST['purchase_price'],
+                    request.POST['market_rent_per_sqft'],
+                    request.POST.get('misc_income', 0),
+                    request.POST.get('annual_opex_reserve', 0),
+                    request.POST.get('annual_capx_reserve', 0),
+                    pk,
+                ])
         return redirect('property_list')
 
     return render(request, 'analytics/property_form.html', {
@@ -133,9 +136,10 @@ def property_delete(request, pk):
         prop = dictfetchall(cursor)[0]
 
     if request.method == 'POST':
-        with connection.cursor() as cursor:
-            cursor.execute("DELETE FROM analytics_lease WHERE property_id = %s", [pk])
-            cursor.execute("DELETE FROM analytics_property WHERE id = %s", [pk])
+        with transaction.atomic():
+            with connection.cursor() as cursor:
+                cursor.execute("DELETE FROM analytics_lease WHERE property_id = %s", [pk])
+                cursor.execute("DELETE FROM analytics_property WHERE id = %s", [pk])
         return redirect('property_list')
 
     return render(request, 'analytics/property_confirm_delete.html', {'prop': prop})
